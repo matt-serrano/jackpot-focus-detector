@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from FaceMeshModule import FaceMeshGenerator
-
 
 @dataclass(slots=True)
 class FaceFeaturesResult:
@@ -14,6 +12,7 @@ class FaceFeaturesResult:
     face_present: bool
     landmarks: dict[int, tuple[int, int]] = field(default_factory=dict)
     average_ear: float | None = None
+    frame_size: tuple[int, int] = (0, 0)
 
 
 class FaceFeaturesExtractor:
@@ -23,18 +22,24 @@ class FaceFeaturesExtractor:
     LEFT_EYE_EAR = [362, 380, 374, 263, 386, 385]
 
     def __init__(self) -> None:
+        print("Loading MediaPipe Face Mesh. The first startup can take around a minute...")
+        from FaceMeshModule import FaceMeshGenerator
+
         self.generator = FaceMeshGenerator()
+        print("MediaPipe Face Mesh loaded.")
 
     def process(self, frame) -> FaceFeaturesResult:
+        frame_height, frame_width = frame.shape[:2]
         _, landmarks = self.generator.create_face_mesh(frame, draw=False)
         if not landmarks:
-            return FaceFeaturesResult(face_present=False)
+            return FaceFeaturesResult(face_present=False, frame_size=(frame_width, frame_height))
 
         average_ear = self._compute_average_ear(landmarks)
         return FaceFeaturesResult(
             face_present=True,
             landmarks=landmarks,
             average_ear=average_ear,
+            frame_size=(frame_width, frame_height),
         )
 
     def _compute_average_ear(self, landmarks: dict[int, tuple[int, int]]) -> float:

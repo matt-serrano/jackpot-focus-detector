@@ -1,5 +1,6 @@
-opencv-python
+﻿opencv-python
 mediapipe
 numpy
 tensorflow
 matplotlib
+protobuf>=4.25.3,<5

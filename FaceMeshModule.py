@@ -1,10 +1,10 @@
-import cv2 as cv
+﻿import cv2 as cv
 import mediapipe as mp
 import os
 
 
 class FaceMeshGenerator:
-    def __init__(self, mode=False, num_faces=2, min_detection_con=0.5, min_track_con=0.5):
+    def __init__(self, mode=False, num_faces=1, min_detection_con=0.35, min_track_con=0.35):
         """
         Initialize FaceMesh detector with specified parameters
         """
@@ -52,7 +52,6 @@ class FaceMeshGenerator:
                             self.drawSpecs
                         )
 
-                    # Convert normalized landmarks to pixel coordinates
                     ih, iw, _ = frame.shape
                     for ID, lm in enumerate(face_lms.landmark):
                         x, y = int(lm.x * iw), int(lm.y * ih)
@@ -64,37 +63,27 @@ class FaceMeshGenerator:
 
 
 def generate_face_mesh(video_path, resizing_factor, save_video=False, filename=None):
-    """
-    Process video stream and generate face mesh
-    Args:
-        video_path: Path to video file or 0 for webcam
-        resizing_factor: Factor to resize output display
-        save_video: Boolean to enable video saving
-        filename: Output video filename
-    """
+    """Process video stream and generate face mesh."""
     try:
-        # Initialize video capture
         cap = cv.VideoCapture(0 if video_path == 0 else video_path)
         if not cap.isOpened():
             raise RuntimeError("Failed to open video capture")
 
-        # Get video properties
         f_w, f_h, fps = (int(cap.get(x)) for x in (
                 cv.CAP_PROP_FRAME_WIDTH,
                 cv.CAP_PROP_FRAME_HEIGHT,
                 cv.CAP_PROP_FPS
             ))
 
-        # Initialize video writer if saving is enabled
         out = None
         if save_video:
             if not filename:
                 raise ValueError("Filename must be provided when save_video is True")
-            
+
             video_dir = r"D:\PyCharm\PyCharm_files\MEDIAPIPE\FACE_MESH\VIDEOS"
             if not os.path.exists(video_dir):
                 os.makedirs(video_dir)
-                
+
             save_path = os.path.join(video_dir, filename)
             fourcc = cv.VideoWriter_fourcc(*"mp4v")
             out = cv.VideoWriter(save_path, fourcc, fps, (f_w, f_h))
@@ -114,22 +103,19 @@ def generate_face_mesh(video_path, resizing_factor, save_video=False, filename=N
             if video_path == 0:
                 frame = cv.flip(frame, 1)
 
-            # Ensure resizing factor is valid
             if resizing_factor <= 0:
                 raise ValueError("Resizing factor must be positive")
 
             resized_frame = cv.resize(frame, (int(f_w * resizing_factor), int(f_h * resizing_factor)))
             cv.imshow('Video', resized_frame)
-            
-            # Break loop if 'p' is pressed
+
             if cv.waitKey(1) & 0xff == ord('p'):
                 break
 
     except Exception as e:
         print(f"Error during video processing: {str(e)}")
-    
+
     finally:
-        # Clean up resources
         if cap is not None:
             cap.release()
         if out is not None:
@@ -140,4 +126,3 @@ if __name__ == "__main__":
     video_path = 0
     resizing_factor = 1 if video_path == 0 else 0.5
     generate_face_mesh(video_path, resizing_factor)
-
